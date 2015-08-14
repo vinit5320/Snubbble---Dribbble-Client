@@ -13,7 +13,7 @@ class Utils {
     
     class func asyncLoadShotImage(shot: Shot, imageView : UIImageView){
         
-        let downloadQueue = dispatch_queue_create("com.iShots.processsdownload", nil)
+        let downloadQueue = dispatch_queue_create("com.swityOS.processsdownload", nil)
         
         dispatch_async(downloadQueue) {
             
@@ -33,7 +33,7 @@ class Utils {
     
     class func asyncLoadUserImage(user: User, imageView : UIImageView){
         
-        let downloadQueue = dispatch_queue_create("com.iShots.processsdownload", nil)
+        let downloadQueue = dispatch_queue_create("com.swityOS.processsdownload", nil)
         
         dispatch_async(downloadQueue) {
             
