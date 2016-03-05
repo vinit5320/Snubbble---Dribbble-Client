@@ -17,7 +17,7 @@ class Utils {
         
         dispatch_async(downloadQueue) {
             
-            var data = NSData(contentsOfURL: NSURL(string: shot.imageUrl)!)
+            let data = NSData(contentsOfURL: NSURL(string: shot.imageUrl)!)
             
             var image : UIImage?
             if data != nil {
@@ -37,7 +37,7 @@ class Utils {
         
         dispatch_async(downloadQueue) {
             
-            var data = NSData(contentsOfURL: NSURL(string: user.avatarUrl)!)
+            let data = NSData(contentsOfURL: NSURL(string: user.avatarUrl)!)
             
             var image : UIImage?
             if data != nil {

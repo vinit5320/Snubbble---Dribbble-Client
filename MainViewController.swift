@@ -21,26 +21,28 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     @IBOutlet var topGradientView: UIView!
     
     
-    func isConnectedToNetwork() -> Bool {
+    func connectedToNetwork() -> Bool {
         
-        var zeroAddress = sockaddr_in(sin_len: 0, sin_family: 0, sin_port: 0, sin_addr: in_addr(s_addr: 0), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+        var zeroAddress = sockaddr_in()
         zeroAddress.sin_len = UInt8(sizeofValue(zeroAddress))
         zeroAddress.sin_family = sa_family_t(AF_INET)
         
-        let defaultRouteReachability = withUnsafePointer(&zeroAddress) {
-            SCNetworkReachabilityCreateWithAddress(nil, UnsafePointer($0)).takeRetainedValue()
-        }
-        
-        var flags: SCNetworkReachabilityFlags = 0
-        if SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags) == 0 {
+        guard let defaultRouteReachability = withUnsafePointer(&zeroAddress, {
+            SCNetworkReachabilityCreateWithAddress(nil, UnsafePointer($0))
+        }) else {
             return false
         }
         
-        let isReachable = (flags & UInt32(kSCNetworkFlagsReachable)) != 0
-        let needsConnection = (flags & UInt32(kSCNetworkFlagsConnectionRequired)) != 0
+        var flags : SCNetworkReachabilityFlags = []
+        if !SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags) {
+            return false
+        }
         
-        return (isReachable && !needsConnection) ? true : false
+        let isReachable = flags.contains(.Reachable)
+        let needsConnection = flags.contains(.ConnectionRequired)
+        return (isReachable && !needsConnection)
     }
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,7 +54,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         let api = DribbbleAPI()
         api.loadShots("https://api.dribbble.com/v1/shots", completion: didLoadShots)
         addSavingPhotoView()
-        var timer = NSTimer.scheduledTimerWithTimeInterval(5, target: self, selector: Selector("removeLoad"), userInfo: nil, repeats: true)
+        _ = NSTimer.scheduledTimerWithTimeInterval(5, target: self, selector: Selector("removeLoad"), userInfo: nil, repeats: true)
         self.tableView.separatorStyle = UITableViewCellSeparatorStyle.None
         screenWidth = screenSize.width
     }
@@ -70,11 +72,11 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         boxView.layer.cornerRadius = 10
         
         //Here the spinnier is initialized
-        var activityView = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.White)
+        let activityView = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.White)
         activityView.frame = CGRect(x: 0, y: 0, width: 50, height: 50)
         activityView.startAnimating()
         
-        var textLabel = UILabel(frame: CGRect(x: 60, y: 0, width: 200, height: 50))
+        let textLabel = UILabel(frame: CGRect(x: 60, y: 0, width: 200, height: 50))
         textLabel.textColor = UIColor.whiteColor()
         textLabel.text = "Loading Shots"
         
@@ -125,7 +127,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
 
             cell.mainImageView.image = nil
             
-            SDWebImageDownloader.sharedDownloader().downloadImageWithURL(imgURL, options: nil, progress: nil, completed: {[weak self] (image, data, error, finished) in
+            SDWebImageDownloader.sharedDownloader().downloadImageWithURL(imgURL, options: [], progress: nil, completed: {[weak self] (image, data, error, finished) in
                 if let wSelf = self {
                     // do what you want with the image/self
                     
@@ -141,7 +143,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             NSURLConnection.sendAsynchronousRequest(request, queue: mainQueue, completionHandler: { (response, data, error) -> Void in
                 if error == nil {
                     // Convert the downloaded data in to a UIImage object
-                    let image:UIImage = UIImage(data: data)!
+                    let image:UIImage = UIImage(data: data!)!
                     // Update the cell
                     dispatch_async(dispatch_get_main_queue(), {
                         var contentColor:MDContentColor = image.md_imageContentColor()
@@ -171,7 +173,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                     })
                 }
                 else {
-                    println("Error: \(error.localizedDescription)")
+                    print("Error: \(error!.localizedDescription)")
                 }
             })
         
